@@ -16,7 +16,7 @@ const JwtStrategy = passportJWT.Strategy;
 
 const jwtOptions = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-  secretOrKey: 'warehousebooking',
+  secretOrKey: config.secretKey,
   passReqToCallback: true
 }
 

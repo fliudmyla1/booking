@@ -19,10 +19,7 @@ const userSchema = mongoose.Schema(
       type: String,
       default: 'user',
     },
-    company: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Company'
-    }
+    company: [{ type : mongoose.Schema.Types.ObjectId, ref: 'Company' }]
   },
   {
     timestamps: true,

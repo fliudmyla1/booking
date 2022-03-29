@@ -10,7 +10,7 @@ async function add(req, res) {
     const { name } = req.body
 
     if (!name) {
-        res.json({ result: 0, msg: 'name field must be filled.'})
+        res.json({ result: 0, msg: 'Name is required'})
     }
     else {
         let country  = new countryModel()
@@ -22,7 +22,7 @@ async function add(req, res) {
 
 async function edit(req, res) {
     if (!req.body.name) {
-        res.json({ result: 0, msg: 'name field must be filled.'})
+        res.json({ result: 0, msg: 'Name is required'})
     }
     else {
         await countryModel.updateOne({ _id: req.params.countryId }, { name: req.body.name })

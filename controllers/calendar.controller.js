@@ -1,20 +1,26 @@
 const warehouseModel = require('../models/warehouse.model')
+const countryModel = require('../models/country.model')
+const companyModel = require('../models/company.model')
 const slotModel = require('../models/slot.model')
 const bookingModel = require('../models/booking.model')
 const mongoose = require('mongoose')
 async function list(req, res) {
-    const { warehouse, startDate, endDate, page, perPage } = req.query
+    const { warehouse, startDate, endDate, company, page, perPage } = req.query
 
     if (warehouse) {
         let slots = await slotModel.find({ warehouse, fromDate: { $lte: endDate }, toDate: { $gte: startDate }})
         let slotBookings = await bookingModel.find({ date: { $gte: startDate, $lte: endDate }}).select('slot slotQty date')
 
+        let companyQuery = { $match: { 'company.0._id':  company ? mongoose.Types.ObjectId(company) : ( req.user.userType == 'user' ? { $in: req.user.company } : {$ne: ""})}}
+
+
         let list = await bookingModel.aggregate([
             { $match: { date: { $gte: new Date(startDate), $lte: new Date(endDate) }}},
             { $lookup: { from: 'slots', localField: 'slot', foreignField: '_id', as: 'slot'}},
             { $lookup: { from: 'users', localField: 'user', foreignField: '_id', as: 'user'}},
-            { $lookup: { from: 'companies', localField: 'user.0.company', foreignField: '_id', as: 'company'}},
-            { $match: req.user.userType == 'user' ? { 'slot.0.warehouse': mongoose.Types.ObjectId(warehouse), 'user.0.company': req.user.company } : { 'slot.0.warehouse': mongoose.Types.ObjectId(warehouse) }},
+            { $lookup: { from: 'companies', localField: 'company', foreignField: '_id', as: 'company'}},
+            { $match: { 'slot.0.warehouse': mongoose.Types.ObjectId(warehouse) }},
+            companyQuery,
             {
                 $project: {
                     date: 1,
@@ -43,12 +49,23 @@ async function list(req, res) {
 }
 
 async function warehouses(req, res) {
-    let warehouses = await warehouseModel.find()
+    let warehouses = await warehouseModel.find({ country: req.params.country })
     res.json({ result: 1, data: { warehouses }})
 }
 
+async function countries(req, res) {
+    let countries = await countryModel.find()
+    let companies = await companyModel.find()
+    res.json({ result: 1, data: { countries, companies }})
+}
+
 async function booking(req, res) {
-    const { slot, date, slotQty, contactName, contactEmail, contactPhone, lineCnt } = req.body
+    const { slot, date, slotQty, company, contactName, contactEmail, contactPhone, lineCnt } = req.body
+
+    if (!company) {
+        res.json({ result: 0, msg: 'Company is required'})
+        return
+    }
 
     let bookingSlot = await slotModel.findById(slot)
 
@@ -66,6 +83,7 @@ async function booking(req, res) {
         booking.user = req.user._id
         booking.slot = slot
         booking.date = date
+        booking.company = company
         booking.slotQty = slotQty
         booking.contactName = contactName
         booking.contactEmail = contactEmail
@@ -158,6 +176,7 @@ async function move(req, res) {
 module.exports = {
     list,
     warehouses,
+    countries,
     booking,
     download,
     deleteById,

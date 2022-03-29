@@ -14,6 +14,10 @@ const bookingSchema = mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User'
         },
+        company: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        },
         slotQty: {
             type: Number,
             default: 0

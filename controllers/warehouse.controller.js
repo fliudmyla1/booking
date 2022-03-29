@@ -16,16 +16,28 @@ async function list(req, res) {
 async function add(req, res) {
     const { name, country } = req.body
 
-    let warehouse  = new warehouseModel()
-    warehouse.name = name
-    warehouse.country = country
-    let newWarehouse = await warehouse.save()
-    res.json({ result: 1 })
+    if (!name || !country) {
+        res.json({ result: 0, msg: 'Name and Country is required'})
+    }
+    else {
+        let warehouse  = new warehouseModel()
+        warehouse.name = name
+        warehouse.country = country
+        await warehouse.save()
+        res.json({ result: 1 })
+    }
 }
 
 async function edit(req, res) {
-    await warehouseModel.updateOne({ _id: req.params.warehouseId }, { name: req.body.name, country: req.body.country })
-    res.json({ result: 1 })
+    const { name, country } = req.body
+
+    if (!name || !country) {
+        res.json({ result: 0, msg: 'Name and Country is required'})
+    }
+    else {
+        await warehouseModel.updateOne({ _id: req.params.warehouseId }, { name, country })
+        res.json({ result: 1 })
+    }
 }
 
 async function deleteById(req, res) {

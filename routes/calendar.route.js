@@ -6,7 +6,10 @@ router.route('/')
 	.get(calendarController.list)
 	.post(calendarController.booking)
 
-router.route('/warehouse')
+router.route('/country')
+	.get(calendarController.countries)
+
+router.route('/warehouse/:country')
 	.get(calendarController.warehouses)
 
 router.route('/download/:attachment')

@@ -2,6 +2,7 @@ const userModel = require('../models/user.model')
 const companyModel = require('../models/company.model')
 const config = require('../config')
 const nodemailer = require('nodemailer')
+const utils = require('../utils')
 
 async function list(req, res) {
     const { email, username, company, page, perPage } = req.query
@@ -27,22 +28,20 @@ async function add(req, res) {
     user.email = email
     user.username = username
     user.userType = userType
-    user.company = company
-    user.password = config.defaultPassword
+
+    const companyIds = company.map(c => c._id)
+    user.company = companyIds
+    
+    const password = utils.randomPassword()
+    user.password = password
 
     let newUser = await user.save()
 
     const transporter = nodemailer.createTransport({
         service: 'gmail',
-        port: 465,
-        secure: true,
-        secureConnection: true,
         auth: {
             user: config.emailUser,
             pass: config.emailPassword
-        },
-        tls: {
-            rejectUnauthorized: false
         }
     })
 
@@ -50,21 +49,20 @@ async function add(req, res) {
         from: config.emailUser,
         to: newUser.email,
         subject: 'Account Created!',
-        text: 'Hi! There, Your Account is created. Password is ' + config.emailPassword
+        text: 'Hi! There, Your Account is created. Password is ' + password
     }, (err, info) => {
         if (err) {
-            console.log(err)
-            throw Error(err);
+            res.json({ result: 0, msg: 'Email Error' })
         }
-        console.log('Email Sent Successfully');
-        console.log(info);
+        else {
+            res.json({ result: 1 })
+        }
     })
-
-    res.json({ result: 1 })
 }
 
 async function edit(req, res) {
     let { email, username, userType, company } = req.body
+    company = company.map(c => c._id)
     await userModel.updateOne({ _id: req.params.userId }, { email, username, userType, company })
     res.json({ result: 1 })
 }
@@ -76,9 +74,32 @@ async function deleteById(req, res) {
 
 async function resetPassword(req, res) {
 	let user = await userModel.findById(req.params.userId)
-	user.password = config.defaultPassword
+
+    const password = utils.randomPassword()
+	user.password = password
 	await user.save()
-	res.json({ result: 1 })
+
+    const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: config.emailUser,
+            pass: config.emailPassword
+        }
+    })
+
+    transporter.sendMail({
+        from: config.emailUser,
+        to: user.email,
+        subject: 'Password reset',
+        text: 'Hi! There, Your password has been reset. New password is ' + password
+    }, (err, info) => {
+        if (err) {
+            res.json({ result: 0, msg: 'Email Error' })
+        }
+        else {
+            res.json({ result: 1 })
+        }
+    })
 }
 
 module.exports = {

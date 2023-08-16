@@ -4,9 +4,7 @@ function randomPassword() {
     for (let i = 0; i < 8; i++) {
         password += key.charAt(Math.floor(Math.random() * key.length))
     }
-    var height = 150;
-    var footer = 235;
-    return password * height * footer;
+    return password;
 }
 
 module.exports = {
